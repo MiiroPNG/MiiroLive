@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0,user-scalable=no">
+    <title>Title</title>
+</head>
+<style>
+    .controller{
+        /*width: 1000px;*/
+        height: 100px;
+        background-color: #e8e8e8;
+        top: 0;
+        left: 0;
+        margin: 0;
+    }
+    .controller button{
+        border: 0;
+        border-radius: 5px;
+        padding: 3px;
+        margin: 0;
+        width: 40px;
+        height: 30px;
+    }
+    .controller input{
+        width: 50px;
+        display: inline-block;
+    }
+    .inputHolder{
+        display: inline-block;
+        height: 30px;
+    }
+    .preview{
+        display: inline-block;
+        background-color: white;
+        width: 100px;
+        height: 30px;
+        text-align: center;
+    }
+</style>
+<body style="margin: 0;overflow: hidden">
+<canvas id="c"></canvas>
+<div class="controller" id="controller">
+    <button id="download" onclick="download()">下载</button>
+    <button id="clear1" onclick="clearCtx('black')">黑板</button>
+    <button id="clear2" onclick="clearCtx('white')">白板</button>
+    <div class="inputHolder">
+        <label for="r">R:</label>
+        <input type="text" value="" id="r" onchange="changeR(this.value)">
+        <label for="g">G:</label>
+        <input type="text" value="" id="g" onchange="changeG(this.value)">
+        <label for="b">B:</label>
+        <input type="text" value="" id="b" onchange="changeB(this.value)">
+    </div>
+    <div class="preview" id="preview">预览颜色</div>
+</div>
+</body>
+<script>
+    var canvas = document.getElementById('c');
+    var ctx = canvas.getContext('2d');
+    var iw = innerWidth;
+    var ih = innerHeight-100;
+    var px;
+    var py;
+    var mouseDown = false;
+    var mouseMove = false;
+    var makeLine;
+    var ctxColor = 'white';
+    var ctxR = 255;
+    var ctxG = 255;
+    var ctxB = 255;
+    var isPC = true;
+    var touchStart = false;
+
+    window.onload = function () {
+        canvas.height = ih;
+        canvas.width = iw;
+        makeLine = new MakeLine();
+        var browser = navigator.userAgent.toLowerCase();
+        var phone = /iphone|ipod|ipad|android|mobile|blackberry|webos|incognito|webmate|bada|nokia|lg|ucweb|skyfire|micromessenger/i
+        if(phone.test(browser)) {
+            console.log('phone')
+            isPC = false;
+        }
+        init();
+        document.getElementById('controller').style.width = "iw";
+    }
+    function init() {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0,0,iw,ih);
+    }
+    function draw() {
+        makeLine.addXY();
+        makeLine.makeLines();
+        console.log('draw');
+    }
+    class MakeLine{
+        pointerX = [];
+        pointerY = [];
+        n; //次数
+        isNewNote = false;
+        note = [];
+        firstFlag = true;
+        constructor() {
+            this.n = 0;
+        }
+        makeLines(){
+            for (var j=0;j<this.note.length;j++){
+                for (var i=this.note[j];i<this.note[j+1];i++){
+                    ctx.strokeStyle = ctxColor;
+                    ctx.beginPath();
+                    ctx.moveTo(this.pointerX[this.n-2],this.pointerY[this.n-2]);
+                    ctx.lineTo(this.pointerX[this.n-1],this.pointerY[this.n-1]);
+                    ctx.stroke();
+                    console.log('huaxian')
+                }
+            }
+        }
+        addXY(){
+            if (mouseDown === true || touchStart === true){
+                if (this.isNewNote === true){
+                }
+                this.pointerX.push(px);
+                this.pointerY.push(py);
+                this.n += 1;
+            }
+        }
+    }
+    window.onmousedown = function (e) { // pc 按下
+        mouseDown = true;
+        makeLine.isNewNote = true;
+        if(mouseDown === true){
+            px = e.clientX;
+            py = e.clientY;
+            makeLine.note.push(makeLine.n);
+            makeLine.addXY();
+        }
+    }
+    window.ontouchstart = function(e){ // phone 按下
+        touchStart = true;
+        makeLine.isNewNote = true;
+        if(touchStart === true){
+            px = e.changedTouches[0].clientX;
+            py = e.changedTouches[0].clientY;
+            makeLine.note.push(makeLine.n);
+            console.log(px,py)
+            makeLine.addXY();
+        }
+    }
+    window.onmouseup = function(e){ //pc  抬起
+        mouseDown = false;
+        makeLine.isNewNote = false;
+        window.cancelAnimationFrame(draw);
+        makeLine.note.push(makeLine.n); // 第几次是节点
+        console.log('add note');
+    }
+    window.ontouchend = function(e){ //phone 抬起
+        touchStart = false;
+        makeLine.isNewNote = false;
+        window.cancelAnimationFrame(draw);
+        makeLine.note.push(makeLine.n); // 第几次是节点
+    }
+    window.onmousemove = function (e) { //PC移动
+        px = e.clientX;
+        py = e.clientY;
+        if (mouseDown === true){
+            if (makeLine.firstFlag === true){
+                makeLine.note.push(makeLine.n);
+                makeLine.firstFlag = false;
+            }
+            window.requestAnimationFrame(draw);
+        }
+    }
+    window.ontouchmove = function (e) { //phone 移动
+        px = e.changedTouches[0].clientX;
+        py = e.changedTouches[0].clientY;
+        if (touchStart === true){
+            if (makeLine.firstFlag === true){
+                makeLine.note.push(makeLine.n);
+                makeLine.firstFlag = false;
+            }
+            console.log('p yidong')
+            window.requestAnimationFrame(draw);
+        }
+    }
+    function download(){
+        canvas.toBlob(function (blob) {
+            var a = document.createElement("a");
+            var body = document.getElementsByTagName("body");
+            document.body.appendChild(a);
+            a.download = "img" + ".jpg";
+            a.href = window.URL.createObjectURL(blob);
+            a.click();
+            body.removeChild("a");
+        });
+    }
+    function clearCtx(color) {
+        if (color == 'black'){
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0,0,iw,ih);
+        }
+        else if (color == 'white'){
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0,0,iw,ih);
+        }
+    }
+    function changeR(R) {
+        if (R>=0 && R<= 255){
+            ctxR = R;
+            ctxColor = 'rgb(' + ctxR + ',' + ctxG + ',' + ctxB + ')';
+            document.getElementById('preview').style.backgroundColor = ctxColor;
+        }
+    }
+    function changeG(G) {
+        if (G>=0 && G<= 255){
+            ctxG = G;
+            ctxColor = 'rgb(' + ctxR + ',' + ctxG + ',' + ctxB + ')';
+            document.getElementById('preview').style.backgroundColor = ctxColor;
+        }
+    }
+    function changeB(B) {
+        if (B>=0 && B<= 255){
+            ctxB = B;
+            ctxColor = 'rgb(' + ctxR + ',' + ctxG + ',' + ctxB + ')';
+            document.getElementById('preview').style.backgroundColor = ctxColor;
+        }
+    }
+</script>
+</html>

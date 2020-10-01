@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body style="overflow: hidden;margin: 0">
+<canvas id="c" width="1536" height="722"></canvas>
+</body>
+<script>
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+    stars = [];
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+
+    class Star{
+        vx = 3;
+        vy = 5;
+        r = 4;
+        constructor(x,y,vx,vy,r) {
+            this.x = x;
+            this.y = y;
+            this.vx += vx;
+            this.vy += vy;
+            this.r += r;
+        };
+        move(){
+            if (this.x > 1536){
+                this.x = 0;
+                console.log('arrive x')
+            }else if(this.y > 722){
+                this.y = 0;
+                console.log('arrive y')
+            }
+            this.x += this.vx;
+            this.y += this.vy;
+        };
+        drawStar(){
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(this.x,this.y,this.r,0,Math.PI*2,true);
+            ctx.closePath();
+            ctx.fill();
+        };
+    }
+
+    function starInit() {
+        for (var i = 0; i < 30; i++){
+            var x = Math.random() * 1000;
+            var y = Math.random() * 700;
+            var vx = Math.random() * 2.5;
+            var vy = Math.random() * 3.5;
+            var r = Math.random() * 2;
+            stars.push(new Star(x,y,vx,vy,r));
+        }
+    }
+
+    function draw() {
+        for (let star of stars){
+            star.move();
+            star.drawStar();
+        }
+        ctx.fillStyle = 'rgba(0,0,0,.3)';
+        ctx.fillRect(0,0,1536,722);
+        window.requestAnimationFrame(draw);
+    }
+    window.onload = function () {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0,0,1536,722);
+        starInit();
+        draw();
+    }
+</script>
+</html>

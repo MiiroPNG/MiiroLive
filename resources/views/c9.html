@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<style>
+    #c{
+        filter: blur(2px);
+    }
+</style>
+<body style="overflow: hidden;margin: 0;background-color: black">
+<canvas id="c" width="1536" height="3000"></canvas>
+</body>
+<script>
+    var canvas = document.getElementById('c')
+    var ctx = canvas.getContext('2d')
+
+    iw = innerWidth / 2;
+    ih = innerHeight / 2;
+    var changColor = ctx.createRadialGradient(iw,ih,10,iw,ih,1000)
+    changColor.addColorStop(0,'rgba(0,0,55,0.35)')
+    changColor.addColorStop(1,'rgba(0,0,0,0.35)')
+
+    var fStars = [];
+    var rStars = [];
+    var smallStars = [];
+    class flickerStar{
+        time = 0;
+        maxTime = 0;
+        fX;
+        fY;
+        fR;
+        constructor(PX,PY,R,time) {
+            this.fX = PX;
+            this.fY = PY;
+            this.fR = R;
+            this.maxTime += Math.floor(time);
+        }
+
+        flicker(){
+            this.time += 1;
+            if (this.time === this.maxTime){
+                this.time = 0;
+                this.fX = Math.random()*1536;
+                this.fY = Math.random()*3000;
+                this.fR = Math.random()*3;
+                this.maxTime = Math.floor(Math.random()*1000)
+            }else {
+                this.fR += 0.001;
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(this.fX,this.fY,this.fR,0,Math.PI*2)
+                ctx.closePath()
+                ctx.fill()
+            }
+        }
+    }
+
+    class rotateStar{
+        rX;
+        rY;
+        rR;
+        starR;
+        angle;
+        v;
+        constructor(rR,starR,angle,v) {
+            //距离圆心远的话增大球的半径
+            if (rR > 300){
+                starR = Math.random() * 5;
+            }
+            this.rR = rR;
+            this.starR = starR;
+            this.angle = angle;
+            this.v = v;
+        }
+        ro(){
+            this.angle += this.v;
+            this.rX = this.rR * Math.cos(this.angle)
+            this.rY = this.rR * Math.sin(this.angle)
+            ctx.fillStyle = 'white'
+            ctx.beginPath();
+            ctx.arc(this.rX,this.rY,this.starR,0,Math.PI*2)
+            ctx.closePath()
+            ctx.fill()
+        }
+    }
+    function draw(){
+        ctx.restore();
+        ctx.save();
+        ctx.fillStyle = changColor;
+        ctx.fillRect(0,0,1536,3000);
+        for (let star1 of fStars){
+            star1.flicker();
+        }
+        for (let star2 of smallStars){
+            star2.flicker();
+        }
+        ctx.translate(iw,ih)
+        for (let star3 of rStars){
+            star3.ro();
+        }
+        window.requestAnimationFrame(draw);
+    }
+
+    function init(){
+        var i = 0;
+        while (i <= 50){
+            fStars.push(new flickerStar(Math.random()*1536,Math.random()*722,Math.random()*3,Math.floor(Math.random()*1000)));
+            i++;
+        }
+        var s = 0;
+        while (s <= 300){
+            //横坐标 纵坐标 球大小 消失时间
+            smallStars.push(new flickerStar(Math.random()*1536,Math.random()*722,Math.random()*0.05,Math.floor(Math.random()*2000)));
+            s++;
+        }
+        var j = 0;
+        while (j <= 500){
+            // 半径 球大小 开始角度 运动速度
+            rStars.push(new rotateStar(Math.random()*1000+10,Math.random()*3,Math.random()*360*Math.PI/180, Math.random()*0.5*Math.PI/180));
+            j++;
+        }
+    }
+
+
+$(function () {
+    ctx.save()
+    console.log(innerWidth,'-',innerHeight)
+    init()
+    window.requestAnimationFrame(draw)
+})
+
+</script>
+</html>
